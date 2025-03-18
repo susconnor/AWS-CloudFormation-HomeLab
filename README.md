@@ -1,10 +1,10 @@
-# Creating a Home Lab using AWS CloudFormation
+# Creating a Home Lab Using AWS CloudFormation
 
 In this tutorial we will create a home lab environment in AWS to learn Active Directory. CloudFormation and Infrastructure Composer will be used to deploy the necessary infrastructure, which serves as a hands-on experience for understanding Infrastructure as Code (IaC) concepts. 
 
 ![lab diagram](images/home%20lab%20diagram.png)
 
-### AWS Command Line Interface (AWS CLI)
+### AWS Command Line Interface
 
 The AWS CLI is an open source tool that enables you to interact with AWS services using commands in your command-line shell. We will need to use this to connect to our instances later on in the lab. Download instructions for your operating system can be found [here](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html). Open a terminal and enter the following command:
 
@@ -46,7 +46,7 @@ Enter your keys, [default region](https://docs.aws.amazon.com/general/latest/gr/
 
 Switch to your new IAM user account and navigate to CloudFormation. Select create a stack and choose the option to build from Infrastructure Composer. This stack is a collection of AWS resources managed as a single unit.  Deleting a stack deletes all its associated resources. 
 
-The first resource we will add to our stack is a Virtual Private Network known more commonly as a [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html). A VPC provides a logically isolated section of the AWS cloud, giving you a dedicated space to launch and manage your AWS resources. This includes servers, databases, and other components you might use to create an application, or in our case, a home lab. You control the network configuration, including IP address ranges and security settings.
+The first resource we will add to our stack is a [Virtual Private Network](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html). A VPC provides a logically isolated section of the AWS cloud, giving you a dedicated space to launch and manage your AWS resources. This includes servers, databases, and other components you might use to create an application, or in our case, a home lab. You control the network configuration, including IP address ranges and security settings.
 
 In the Infrastructure Composer interface, search for **VPC** on the left side and select **AWS::EC2::VPC**. Drag the VPC resource onto the canvas.
 
