@@ -42,7 +42,7 @@ Enter your keys, [default region](https://docs.aws.amazon.com/general/latest/gr/
 
 ![aws configure command](images/aws-configure.png)
 
-### Create a VPC and Subnet With Infrastructure Composer
+### Create a VPC With Infrastructure Composer
 
 Switch to your new IAM user account and navigate to CloudFormation. Select create a stack and choose the option to build from Infrastructure Composer. This stack is a collection of AWS resources managed as a single unit.  Deleting a stack deletes all its associated resources. 
 
