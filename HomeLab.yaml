@@ -1,8 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Active Directory Lab in AWS with NAT Gateway for Internet Access
+Description: Active Directory Lab in AWS
 
 Resources:
-  # VPC
   LabVPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -15,7 +14,6 @@ Resources:
     Properties:
       KeyName: HomeLabKeyPair
 
-  # Public Subnet (For NAT Gateway)
   LabPublicSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -24,7 +22,6 @@ Resources:
       AvailabilityZone: us-east-1a
       MapPublicIpOnLaunch: true
 
-  # Private Subnet (For AD Instances)
   LabPrivateSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -33,7 +30,6 @@ Resources:
       AvailabilityZone: us-east-1a
       MapPublicIpOnLaunch: false
 
-  # Internet Gateway
   InternetGateway:
     Type: AWS::EC2::InternetGateway
 
@@ -44,20 +40,18 @@ Resources:
       VpcId: !Ref LabVPC
       InternetGatewayId: !Ref InternetGateway
 
-  # Elastic IP for NAT Gateway
+  # IP for NAT Gateway
   NatGatewayEIP:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
 
-  # NAT Gateway
   NATGateway:
     Type: AWS::EC2::NatGateway
     Properties:
       SubnetId: !Ref LabPublicSubnet
       AllocationId: !GetAtt NatGatewayEIP.AllocationId
 
-  # Public Route Table
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -78,7 +72,6 @@ Resources:
       SubnetId: !Ref LabPublicSubnet
       RouteTableId: !Ref PublicRouteTable
 
-  # Private Route Table
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -99,84 +92,82 @@ Resources:
       SubnetId: !Ref LabPrivateSubnet
       RouteTableId: !Ref PrivateRouteTable
 
-  # Security Group for Domain Controller
   DCSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow AD traffic, RDP, and SSM for DC
+      GroupDescription: Allow AD traffic, RDP (limited), and SSM for DC
       VpcId: !Ref LabVPC
       SecurityGroupIngress:
         - IpProtocol: icmp
           FromPort: -1
           ToPort: -1
-          CidrIp: 10.0.1.0/24
+          CidrIp: 10.0.1.0/24 # Allow ICMP from private subnet
         - IpProtocol: tcp
           FromPort: 53
           ToPort: 53
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # DNS TCP
         - IpProtocol: udp
           FromPort: 53
           ToPort: 53
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # DNS UDP
         - IpProtocol: tcp
           FromPort: 88
           ToPort: 88
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # Kerberos TCP
         - IpProtocol: udp
           FromPort: 88
           ToPort: 88
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # Kerberos UDP
         - IpProtocol: tcp
           FromPort: 389
           ToPort: 389
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # LDAP TCP
         - IpProtocol: udp
           FromPort: 389
           ToPort: 389
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # LDAP UDP
         - IpProtocol: tcp
           FromPort: 636
           ToPort: 636
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # LDAPS TCP
         - IpProtocol: tcp
           FromPort: 445
           ToPort: 445
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # SMB
         - IpProtocol: tcp
           FromPort: 135
           ToPort: 135
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # RPC
         - IpProtocol: tcp
           FromPort: 49152
           ToPort: 65535
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # Dynamic RPC ports
         - IpProtocol: udp
           FromPort: 123
           ToPort: 123
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0 # NTP
         - IpProtocol: tcp
           FromPort: 3389
           ToPort: 3389
-          CidrIp: 68.129.16.136/32
+          CidrIp: 0.0.0.0/0 # RDP, Replace with your IP address /32
       SecurityGroupEgress:
         - IpProtocol: icmp
           FromPort: -1
           ToPort: -1
-          CidrIp: 10.0.1.0/24
+          CidrIp: 10.0.1.0/24 # Allow ICMP to private subnet
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0 # HTTPS
         - IpProtocol: tcp
           FromPort: 53
           ToPort: 53
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0 # DNS TCP
         - IpProtocol: udp
           FromPort: 53
           ToPort: 53
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0 # DNS UDP
 
-  # Security Group for Client Machines
   ClientSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -186,72 +177,72 @@ Resources:
         - IpProtocol: icmp
           FromPort: -1
           ToPort: -1
-          CidrIp: 10.0.1.0/24
+          CidrIp: 10.0.1.0/24 # Allow ICMP from private subnet
         - IpProtocol: tcp
           FromPort: 3389
           ToPort: 3389
-          CidrIp: 68.129.16.136/32
+          CidrIp: 0.0.0.0/0 # RDP, Replace with your IP address /32
         - IpProtocol: tcp
           FromPort: 53
           ToPort: 53
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # DNS TCP
         - IpProtocol: udp
           FromPort: 53
           ToPort: 53
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # DNS UDP
       SecurityGroupEgress:
         - IpProtocol: icmp
           FromPort: -1
           ToPort: -1
-          CidrIp: 10.0.1.0/24
+          CidrIp: 10.0.1.0/24 # Allow ICMP to private subnet
         - IpProtocol: tcp
           FromPort: 53
           ToPort: 53
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # DNS TCP
         - IpProtocol: udp
           FromPort: 53
           ToPort: 53
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # DNS UDP
         - IpProtocol: tcp
           FromPort: 88
           ToPort: 88
-          CidrIp: 10.0.1.0/24 # Private subnet CIDR
+          CidrIp: 10.0.1.10/32 # Kerberos TCP (DC IP)
         - IpProtocol: udp
           FromPort: 88
           ToPort: 88
-          CidrIp: 10.0.1.0/24 # Private subnet CIDR
+          CidrIp: 10.0.1.10/32 # Kerberos UDP (DC IP)
         - IpProtocol: tcp
           FromPort: 389
           ToPort: 389
-          CidrIp: 10.0.1.0/24 # Private subnet CIDR
+          CidrIp: 10.0.1.10/32 # LDAP TCP (DC IP)
         - IpProtocol: udp
           FromPort: 389
           ToPort: 389
-          CidrIp: 10.0.1.0/24 # Private subnet CIDR
+          CidrIp: 10.0.1.10/32 # LDAP UDP (DC IP)
         - IpProtocol: tcp
           FromPort: 636
           ToPort: 636
-          CidrIp: 10.0.1.0/24 # Private subnet CIDR
+          CidrIp: 10.0.1.10/32 # LDAPS TCP (DC IP)
         - IpProtocol: tcp
           FromPort: 445
           ToPort: 445
-          CidrIp: 10.0.1.0/24 # Private subnet CIDR
+          CidrIp: 10.0.1.10/32 # SMB (DC IP)
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0 # HTTPS
         - IpProtocol: udp
           FromPort: 123
           ToPort: 123
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0 # NTP
         - IpProtocol: tcp
           FromPort: 135
           ToPort: 135
-          CidrIp: 10.0.1.10/32 # Or the specific IP of your DC
+          CidrIp: 10.0.1.10/32 # RPC (DC IP)
         - IpProtocol: tcp
           FromPort: 49152
           ToPort: 65535
-          CidrIp: 10.0.1.10/32 # Or the specific IP of your DC
+          CidrIp: 10.0.1.10/32 # Dynamic RPC (DC IP)
 
   # IAM Role for SSM
   SSMRole:
@@ -278,7 +269,6 @@ Resources:
       Roles:
         - !Ref SSMRole
 
-  # Domain Controller 
   DC1:
     Type: AWS::EC2::Instance
     Properties:
@@ -291,7 +281,6 @@ Resources:
       IamInstanceProfile: !Ref SSMInstanceProfile
       KeyName: !Ref KeyPair
 
-  # Client Machine 
   Client1:
     Type: AWS::EC2::Instance
     Properties:

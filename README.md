@@ -2,11 +2,9 @@
 
 In this tutorial we will create a home lab environment in AWS to learn Active Directory. CloudFormation and Infrastructure Composer will be used to deploy the necessary infrastructure, which serves as a hands-on experience for understanding Infrastructure as Code (IaC) concepts. 
 
-## The Plan
+![lab diagram](images/home%20lab%20diagram.png)
 
-![lab diagram](images/p0.png)
-
-## AWS Command Line Interface (AWS CLI)
+### AWS Command Line Interface (AWS CLI)
 
 The AWS CLI is an open source tool that enables you to interact with AWS services using commands in your command-line shell. We will need to use this to connect to our instances later on in the lab. Download instructions for your operating system can be found [here](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html). Open a terminal and enter the following command:
 
@@ -20,7 +18,7 @@ If installed properly, you should get an output resembling:
 aws-cli/1.37.24 Python/3.12.6 Windows/11 botocore/1.36.24
 ```
 
-## Create an AWS Account
+### Create an AWS Account
 
 [Create an AWS account](https://signin.aws.amazon.com/signup?request_type=register). This account is the root user by default. Using this account, create an IAM user with *AWSCloudFormationFullAccess* and *AmazonEC2FullAccess* permissions. This follows the principle of least privilege. For learning purposes, *PowerUserAccess* is an option, but it grants broader permissions than required.
 
@@ -30,7 +28,7 @@ Navigate to the security tab and create an access key for the user. The descript
 
 ![create keys](images/create-keys.png)
 
-AWS gives us suggestions on how to manage access keys, I would suggest using a password manager like BitWarden. 
+AWS gives us suggestions for how to manage access keys, I would suggest using a password manager like BitWarden. 
 
 ![access keys](images/retreive-keys.png)
 
@@ -44,9 +42,9 @@ Enter your keys, [default region](https://docs.aws.amazon.com/general/latest/gr/
 
 ![aws configure command](images/aws-configure.png)
 
-## Create a VPC and Subnet With Infrastructure Composer
+### Create a VPC and Subnet With Infrastructure Composer
 
-Switch to your new IAM user account and navigate to CloudFormation. Select create a stack and choose the option to build from Infrastructure Composer. This stack is a collection of AWS resources managed as a single unit. It's defined by a template. Deleting a stack deletes all its associated resources. 
+Switch to your new IAM user account and navigate to CloudFormation. Select create a stack and choose the option to build from Infrastructure Composer. This stack is a collection of AWS resources managed as a single unit.  Deleting a stack deletes all its associated resources. 
 
 The first resource we will add to our stack is a Virtual Private Network known more commonly as a [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html). A VPC provides a logically isolated section of the AWS cloud, giving you a dedicated space to launch and manage your AWS resources. This includes servers, databases, and other components you might use to create an application, or in our case, a home lab. You control the network configuration, including IP address ranges and security settings.
 
@@ -68,7 +66,7 @@ LabVPC:
       EnableDnsSupport: true
       EnableDnsHostnames: true
 ```
-Notice the difference between the code I just shared verses what was pasted into the **Resource configuration** section in the image above. Only the **Properties** portion of code should be pasted into that section. 
+Notice the difference between the code I just shared verses what was pasted into the **Resource configuration** section in the image above. Only the **Properties** portion of the code should be pasted into that section. 
 
 ### Subnet
 
@@ -98,7 +96,7 @@ Usually, resources are deployed across multiple availability zones to ensure hig
 
 ![Subnet](images/p2.png)
 
-*Now that we have multiple resources, let's take a look at the CloudFormation template that has been generated. Notice that the template matches the entire code blocks that I've been sharing and not just the properties section.*
+Now that we have multiple resources, let's take a look at the CloudFormation template that has been generated. Notice that the template reflects the complete resource structure, not just the properties section.
 
 Be sure to validate your template after making any changes using the button in the upper right corner. Once all resources have been added, this template can be uploaded to CloudFormation at any time to quickly recreate your home lab.
 
@@ -153,7 +151,6 @@ The public routing table is created and associated with the public subnet. **Pub
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
 
-  # Associate Public Route Table with Public Subnet
   PublicSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -176,7 +173,6 @@ The private routing table is created and associated with the private subnet. **P
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NATGateway
 
-  # Associate Private Route Table with Private Subnet
   PrivateSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -199,72 +195,72 @@ Next we will create [security groups](https://docs.aws.amazon.com/managedservice
         - IpProtocol: icmp
           FromPort: -1
           ToPort: -1
-          CidrIp: 10.0.1.0/24
+          CidrIp: 10.0.1.0/24 # Allow ICMP from private subnet
         - IpProtocol: tcp
           FromPort: 53
           ToPort: 53
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # DNS TCP
         - IpProtocol: udp
           FromPort: 53
           ToPort: 53
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # DNS UDP
         - IpProtocol: tcp
           FromPort: 88
           ToPort: 88
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # Kerberos TCP
         - IpProtocol: udp
           FromPort: 88
           ToPort: 88
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # Kerberos UDP
         - IpProtocol: tcp
           FromPort: 389
           ToPort: 389
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # LDAP TCP
         - IpProtocol: udp
           FromPort: 389
           ToPort: 389
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # LDAP UDP
         - IpProtocol: tcp
           FromPort: 636
           ToPort: 636
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # LDAPS TCP
         - IpProtocol: tcp
           FromPort: 445
           ToPort: 445
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # SMB
         - IpProtocol: tcp
           FromPort: 135
           ToPort: 135
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # RPC
         - IpProtocol: tcp
           FromPort: 49152
           ToPort: 65535
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # Dynamic RPC ports
         - IpProtocol: udp
           FromPort: 123
           ToPort: 123
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0 # NTP
         - IpProtocol: tcp
           FromPort: 3389
           ToPort: 3389
-          CidrIp: 0.0.0.0/32 #Replace 0.0.0.0 with your actual ip address
+          CidrIp: 0.0.0.0/0 # RDP, Replace with your IP address /32
       SecurityGroupEgress:
         - IpProtocol: icmp
           FromPort: -1
           ToPort: -1
-          CidrIp: 10.0.1.0/24
+          CidrIp: 10.0.1.0/24 # Allow ICMP to private subnet
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0 # HTTPS
         - IpProtocol: tcp
           FromPort: 53
           ToPort: 53
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0 # DNS TCP
         - IpProtocol: udp
           FromPort: 53
           ToPort: 53
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0 # DNS UDP
 
 ```
 ```yaml
@@ -277,80 +273,84 @@ Next we will create [security groups](https://docs.aws.amazon.com/managedservice
         - IpProtocol: icmp
           FromPort: -1
           ToPort: -1
-          CidrIp: 10.0.1.0/24 # ICMP (ping) from private subnet
+          CidrIp: 10.0.1.0/24 # Allow ICMP from private subnet
         - IpProtocol: tcp
           FromPort: 3389
           ToPort: 3389
-          CidrIp: 0.0.0.0/32 #Replace 0.0.0.0 with your actual ip address
+          CidrIp: 0.0.0.0/0 # RDP, Replace with your IP address /32
         - IpProtocol: tcp
           FromPort: 53
           ToPort: 53
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # DNS TCP
         - IpProtocol: udp
           FromPort: 53
           ToPort: 53
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # DNS UDP
       SecurityGroupEgress:
         - IpProtocol: icmp
           FromPort: -1
           ToPort: -1
-          CidrIp: 10.0.1.0/24
+          CidrIp: 10.0.1.0/24 # Allow ICMP to private subnet
         - IpProtocol: tcp
           FromPort: 53
           ToPort: 53
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # DNS TCP
         - IpProtocol: udp
           FromPort: 53
           ToPort: 53
-          CidrIp: 10.0.0.0/16
+          CidrIp: 10.0.1.0/24 # DNS UDP
         - IpProtocol: tcp
           FromPort: 88
           ToPort: 88
-          CidrIp: 10.0.1.0/24 
+          CidrIp: 10.0.1.10/32 # Kerberos TCP (DC IP)
         - IpProtocol: udp
           FromPort: 88
           ToPort: 88
-          CidrIp: 10.0.1.0/24 # Private subnet 
+          CidrIp: 10.0.1.10/32 # Kerberos UDP (DC IP)
         - IpProtocol: tcp
           FromPort: 389
           ToPort: 389
-          CidrIp: 10.0.1.0/24 # Private subnet 
+          CidrIp: 10.0.1.10/32 # LDAP TCP (DC IP)
         - IpProtocol: udp
           FromPort: 389
           ToPort: 389
-          CidrIp: 10.0.1.0/24 # Private subnet 
+          CidrIp: 10.0.1.10/32 # LDAP UDP (DC IP)
         - IpProtocol: tcp
           FromPort: 636
           ToPort: 636
-          CidrIp: 10.0.1.0/24 # Private subnet 
+          CidrIp: 10.0.1.10/32 # LDAPS TCP (DC IP)
         - IpProtocol: tcp
           FromPort: 445
           ToPort: 445
-          CidrIp: 10.0.1.0/24 # Private subnet 
+          CidrIp: 10.0.1.10/32 # SMB (DC IP)
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0 # HTTPS
         - IpProtocol: udp
           FromPort: 123
           ToPort: 123
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0 # NTP
         - IpProtocol: tcp
           FromPort: 135
           ToPort: 135
-          CidrIp: 10.0.1.10/32 # Or the static IP of your DC
+          CidrIp: 10.0.1.10/32 # RPC (DC IP)
         - IpProtocol: tcp
           FromPort: 49152
           ToPort: 65535
-          CidrIp: 10.0.1.10/32 # Or the static IP of your DC
+          CidrIp: 10.0.1.10/32 # Dynamic RPC (DC IP)
 ```
 This is a little much, but if we are going to go through the trouble of private subnets, NAT gateways, and port forwarding (to be explained later), we might as well do this correctly and only allow necessary traffic. With that being said, since it is a lab environment you could opt to allow all traffic between the two instances to free up a lot of this code. I will not judge. 
+
+Let's check in on our canvas. 
+
+![canvas](images/canvas-2.png)
 
 ### Systems Manager
 
 Had we decided to place our instances in a public subnet, we could skip this part and just use Remote Desktop Protocol (RDP) to connect to our machine's public IP address.
 
-This IAM role will later be attached to each virtual machine. Windows Servers, along with a few other operating systems, come preinstalled with SSM agents. These agents enable secure communication between your instances and the AWS Systems Manager service. Once this secure connection is established, we'll configure port forwarding through the SSM session to enable RDP access to our Windows Server instances. This allows us to use RDP's familiar interface while maintaining the security benefits of a private subnet.
+This IAM role will later be attached to each virtual machine. Windows Servers, along with a few other operating systems, come preinstalled with SSM agents. These agents enable secure communication between your instances and the AWS Systems Manager service. Once this secure connection is established, we'll configure port forwarding through the SSM session to enable RDP access to our Windows Server instances. This allows us to use RDP's interface while maintaining the security benefits of a private subnet.
 
 ```yaml
 SSMRole:
