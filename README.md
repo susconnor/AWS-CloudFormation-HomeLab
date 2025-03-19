@@ -1,18 +1,18 @@
 # Creating a Home Lab Using AWS CloudFormation
 
-In this tutorial we will create a home lab environment in AWS to learn Active Directory. CloudFormation and Infrastructure Composer will be used to deploy the necessary infrastructure, which serves as a hands-on experience for understanding Infrastructure as Code (IaC) concepts. 
+In this tutorial, we will create a home lab environment in AWS to learn Active Directory. CloudFormation and Infrastructure Composer will be used to deploy the necessary infrastructure, which serves as a hands-on experience for understanding Infrastructure as Code (IaC) concepts. 
 
 ![lab diagram](images/home%20lab%20diagram.png)
 
 ### AWS Command Line Interface
 
-The AWS CLI is an open source tool that enables you to interact with AWS services using commands in your command-line shell. We will need to use this to connect to our instances later on in the lab. Download instructions for your operating system can be found [here](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html). Open a terminal and enter the following command:
+The AWS CLI is an open-source tool that enables you to interact with AWS services using commands in your command-line shell. We will use this later in the lab to connect to our instances. Download instructions for your operating system can be found [here](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html). Open a terminal and enter the following command:
 
 ```powershell
 aws --version
 ```
 
-If installed properly, you should get an output resembling:
+If installed correctly, you should see an output similar to this:
 
 ```powershell
 aws-cli/1.37.24 Python/3.12.6 Windows/11 botocore/1.36.24
@@ -28,7 +28,7 @@ Navigate to the security tab and create an access key for the user. The descript
 
 ![create keys](images/create-keys.png)
 
-AWS gives us suggestions for how to manage access keys, I would suggest using a password manager like BitWarden. 
+AWS provides recommendations for managing access keys. I suggest using a password manager like BitWarden.
 
 ![access keys](images/retreive-keys.png)
 
@@ -44,7 +44,7 @@ Enter your keys, [default region](https://docs.aws.amazon.com/general/latest/gr/
 
 ### Create a VPC With Infrastructure Composer
 
-Switch to your new IAM user account and navigate to CloudFormation. Select create a stack and choose the option to build from Infrastructure Composer. This stack is a collection of AWS resources managed as a single unit.  Deleting a stack deletes all its associated resources. 
+Switch to your new IAM user account and navigate to CloudFormation. Select **create a stack** and choose the option to build from Infrastructure Composer. This stack is a collection of AWS resources managed as a single unit.  Deleting a stack deletes all its associated resources. 
 
 The first resource we will add to our stack is a [Virtual Private Network](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html). A VPC provides a logically isolated section of the AWS cloud, giving you a dedicated space to launch and manage your AWS resources. This includes servers, databases, and other components you might use to create an application, or in our case, a home lab. You control the network configuration, including IP address ranges and security settings.
 
@@ -54,9 +54,9 @@ Select the VPC on the canvas and click **Details** to edit its properties.
 
 ![Infrastructure Composer VPC](images/p1.png)
 
-For detailed information about VPC properties, refer to the [Resource Reference](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html) in the lower right corner. My suggestion is to copy the example configurations at the bottom of the documentation and adjust it based on your wants and the resource's needs. 
+For detailed information about VPC properties, refer to the [Resource Reference](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html) in the lower right corner. My suggestion is to copy the example configurations at the bottom of the documentation and adjust them based on your wants and the resource's needs. 
 
-We will be working with YAML to define our infrastructure. Note that CloudFormation also supports JSON. Below is the VPC configurations:
+We will be working with YAML to define our infrastructure. Note that CloudFormation also supports JSON. Below are the VPC configurations:
 
 ```yaml
 LabVPC:
@@ -66,11 +66,11 @@ LabVPC:
       EnableDnsSupport: true
       EnableDnsHostnames: true
 ```
-Notice the difference between the code I just shared verses what was pasted into the **Resource configuration** section in the image above. Only the **Properties** portion of the code should be pasted into that section. 
+Notice the difference between the code I just shared versus what was pasted into the **Resource configuration** section in the image above. Only the **Properties** portion of the code should be pasted into that section. 
 
 ### Subnet
 
-Next we need a private [subnet](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet.html) where our virtual machines will live. Search **AWS::EC2::Subnet** and drag it to the canvas. Each subnet must be associated with a VPC. Below is the YAML configuration for our subnet:
+Next, we need a private [subnet](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet.html) where our virtual machines will live. Search **AWS::EC2::Subnet** and drag it to the canvas. Each subnet must be associated with a VPC. Below is the YAML configuration for our subnet:
 
 ```yaml
 LabPrivateSubnet:
@@ -98,15 +98,15 @@ Usually, resources are deployed across multiple availability zones to ensure hig
 
 Now that we have multiple resources, let's take a look at the CloudFormation template that has been generated. Notice that the template reflects the complete resource structure, not just the properties section.
 
-Be sure to validate your template after making any changes using the button in the upper right corner. Once all resources have been added, this template can be uploaded to CloudFormation at any time to quickly recreate your home lab.
+Be sure to validate your template using the button in the upper right corner after making any changes. Once all resources have been added, this template can be uploaded to CloudFormation at any time to quickly recreate your home lab.
 
 ![Template](images/p3.png)
 
 ### Internet & NAT Gateways
 
-Placing our instances in a private subnet is great for security, but if we can't connect to the internet we also can't perform updates or connect to our machines using the method we have planned. 
+Placing our instances in a private subnet is great for security, but if we can't connect to the internet, we also can't perform updates or connect to our machines using the method we have planned. 
 
-An internet gateway enables resources in your subnets to connect to the internet if the resource has a public IP address. Similarly, resources on the internet can initiate a connection to resources in your subnet using the public IP address. Sounds great, but neither of our instances have public IP addresses. What we need is a NAT Gateway. 
+An internet gateway enables resources in your subnet to connect to the internet if they have a public IP address. Similarly, resources on the internet can initiate a connection to resources in your subnet using the public IP address. Sounds great, but neither of our instances has a public IP address. What we need is a NAT Gateway. 
 
 The NAT Gateway translates private IP addresses of instances to its own public IP, enabling them to access the internet while preventing direct inbound connections. 
 
@@ -182,7 +182,7 @@ The private routing table is created and associated with the private subnet. **P
 ```
 ### Security Groups
 
-Next we will create [security groups](https://docs.aws.amazon.com/managedservices/latest/userguide/about-security-groups.html) for our two virtual machine. Security Groups act as virtual firewalls for resources like EC2 instances, controlling inbound and outbound traffic. They allow you to define rules based on protocols, ports, and IP addresses, specifying which traffic is permitted.
+Next, we will create [security groups](https://docs.aws.amazon.com/managedservices/latest/userguide/about-security-groups.html) for our two virtual machines. Security Groups act as virtual firewalls for resources like EC2 instances, controlling inbound and outbound traffic. They allow you to define rules based on protocols, ports, and IP addresses, specifying which traffic is permitted.
 
 
 ```yaml
@@ -389,7 +389,7 @@ A key pair consists of a public key and a private key. This is a set of security
 ```
 ### Create EC2 Instances
 
-This lab requires two virtual machines, a Domain Controller and a client machine. Both of these will run Windows Server 2022 Base. Ideally the client machine would be windows 10, but AWS saves that operating system for [WorkSpaces](https://docs.aws.amazon.com/workspaces/latest/adminguide/amazon-workspaces.html).  
+This lab requires two virtual machines, a Domain Controller and a client machine. Both of these will run Windows Server 2022 Base. Ideally, the client machine would be Windows 10, but AWS saves that operating system for [WorkSpaces](https://docs.aws.amazon.com/workspaces/latest/adminguide/amazon-workspaces.html).  
 
 As I'm writing this, AWS is charging six cents per hour to run each of these instances using a t3 medium. If that sounds like too much, you can run it for free using a t2 micro, but it will be painfully slow. 
 
@@ -424,7 +424,7 @@ Validate the template one more time and select **Create Template** in the top ri
 
 ![Create Template](images/p4.png)
 
-Create a stack, I named mine LabStack. AWS will begin assigning resources to the stack. If everything was done correctly, you will see **CREATE_COMPLETE** in green. If there's an issue with a resource, it will say **ROLLBACK_COMPLETE** in red. In this case select Events and exam the likely root cause. 
+Create a stack, I named mine LabStack. AWS will begin assigning resources to the stack. If everything is done correctly, you will see **CREATE_COMPLETE** in green. If there's an issue with a resource, it will say **ROLLBACK_COMPLETE** in red. In this case, select Events and exam the likely root cause. 
 
 ![Stack's resources](images/p55.png)
 
@@ -433,11 +433,11 @@ If you haven't already saved a copy of your template locally, you can download a
 
 ### AWS Systems Manager Session Manager 
 
-Using the search bar in the top left corner, search for EC2. Once your on the EC2 overview page select **Instances** on the left side bar. You will see your two virtual machines. 
+Using the search bar in the top left corner, search for EC2. Once you are on the EC2 overview page select **Instances** on the left side bar. You will see your two virtual machines. 
 
 ![instances](images/Instanes.png)
 
-Name each instances by referencing their security group. Hit **connect**.
+Name each instance by referencing their security group. Hit **connect**.
 
 ![connect to ec2](images/connect-ec2.png)
 
